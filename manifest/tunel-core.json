@@ -3,6 +3,15 @@
   "module": "TUNEL-CORE",
   "version": "0.2.0",
   "phase": "PHASE_2_CORE_COMPLETE",
+  "status": "CONSOLIDATED",
+  "mission_proven": true,
+  "product_boundary": {
+    "core_is_independent_product": true,
+    "external_integration_is_separate_phase": true,
+    "concrete_runtime_belongs_to_integrating_system": true,
+    "tunnel_client_belongs_to_windows_mcp": true,
+    "windows_mcp_logic_in_core": false
+  },
   "architecture": {
     "application_independent": true,
     "provider_independent": true,
@@ -44,6 +53,18 @@
     "self-test",
     "plugin-adapter-interface"
   ],
+  "quality_attributes": {
+    "persistence": true,
+    "durability": true,
+    "bilateral_channels": true,
+    "multichannel": true,
+    "high_flow": true,
+    "backpressure": true,
+    "selective_recovery": true,
+    "crash_recovery": true,
+    "split_brain_protection": true,
+    "automatic_boot": true
+  },
   "boot_policy": {
     "watchdog_service": "automatic",
     "before_user_login": true,
