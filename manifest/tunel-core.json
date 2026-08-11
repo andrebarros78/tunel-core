@@ -1,0 +1,30 @@
+{
+    "schema_version": 1,
+    "module": "TUNEL-CORE",
+    "architecture": {
+        "application_independent": true,
+        "tunnel_independent": true,
+        "watchdog_independent": true,
+        "supervisor_independent": true
+    },
+    "components": [
+        "connection",
+        "transport",
+        "health",
+        "recovery",
+        "persistence",
+        "concurrency",
+        "sessions",
+        "credentials",
+        "observability",
+        "supervisor",
+        "watchdog",
+        "bootstrap",
+        "installer",
+        "updater",
+        "self-test"
+    ],
+    "implementation_reference": "Windows MCP",
+    "code_migration_allowed": false,
+    "current_phase": "V1_CORE_LOCAL_GREEN"
+}
