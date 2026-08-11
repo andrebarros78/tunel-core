@@ -1,9 +1,17 @@
 {
   "schema_version": 1,
   "supervisor": {
-    "executable": "%TUNEL_CORE_HOME%\\bin\\tunel-core-supervisor.exe",
-    "arguments": [],
+    "executable": "%TUNEL_CORE_HOME%\\runtime\\venv\\Scripts\\pythonw.exe",
+    "arguments": [
+      "-m",
+      "tunel_core.runner",
+      "--config",
+      "%TUNEL_CORE_HOME%\\config\\runtime.json",
+      "--interval",
+      "5"
+    ],
     "working_directory": "%TUNEL_CORE_HOME%",
-    "process_match": "tunel-core-supervisor"
+    "process_match": "tunel_core\\.runner",
+    "heartbeat_timeout_seconds": 30
   }
 }

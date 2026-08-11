@@ -1,57 +1,82 @@
 # TUNEL-CORE
 
-Núcleo universal de conexão persistente, supervisão, recuperação e estado.
+Núcleo universal de conectividade persistente, multicanal, bilateral e autorrecuperável.
 
-## Fronteira arquitetural
+## Objetivo V0.2 / Fase 2
+
+O Core mantém conexões e canais disponíveis com baixa interferência no caminho de dados, persistência resistente a crash, recuperação seletiva e isolamento entre aplicação, runtime, Supervisor e Watchdog.
 
 ```text
-Controlador externo
-   ↓
+Aplicação externa
+      │
+      ▼
+Adapter
+      │
+      ▼
 TUNEL-CORE
-   ↓
-Supervisor / Watchdog
-   ↓
-Adapter de túnel
-   ↓
-Aplicação local observada
+ ├─ Control Plane
+ │   ├─ Connection / Profiles / Credentials
+ │   ├─ Health / Recovery / Reliability
+ │   ├─ Ownership / Lease / Fencing
+ │   ├─ Persistence / Checkpoint / Rollback
+ │   └─ Supervisor
+ │
+ └─ Data Plane
+     ├─ Transport / Provider adapters
+     ├─ Multi-Channel Manager
+     ├─ Backpressure / priority lanes
+     └─ High-flow streaming
+      │
+      ▼
+Runtime externo
 ```
 
-Regra estrutural: **APLICAÇÃO ≠ TÚNEL ≠ SUPERVISOR ≠ WATCHDOG**.
+Regra estrutural: **APLICAÇÃO ≠ CORE ≠ SUPERVISOR ≠ WATCHDOG ≠ RUNTIME**.
 
-O Core não contém API externa, credenciais reais, regras de aplicação, vínculos a projetos locais, letras de unidade, tarefas agendadas específicas ou caminhos absolutos de uma instalação anterior.
+## Propriedades
 
-## Componentes V1
+- 16 canais simultâneos como baseline normal e 32 como pico inicial; capacidade arquitetural configurável.
+- canais independentes e bilaterais;
+- sem lock global no caminho de dados;
+- filas limitadas e backpressure obrigatório;
+- hot replacement de canal degradado;
+- health com histerese;
+- retry com orçamento, backoff e jitter;
+- circuit breaker por domínio de falha;
+- ownership por lease/fencing para evitar split-brain;
+- identidade de processo não depende apenas de PID;
+- persistência com gravação atômica e journal;
+- checkpoint e rollback;
+- Supervisor corrige apenas recurso degradado sob sua responsabilidade;
+- Watchdog observa apenas o Supervisor;
+- bootstrap recupera estado antes da convergência;
+- atualização transacional com health gate;
+- segredos são referências e nunca estado persistido do Core.
 
-- Connection Manager
-- Tunnel Runtime Adapter
-- Transport Adapter
-- Profile Manager
-- Credential Resolver
-- Supervisor
-- Watchdog
-- Health Engine
-- Recovery Engine
-- Process Identity / Fingerprint
-- Single Instance
-- State Store
-- Persistence / Boot Recovery
-- Session / Concurrency primitives
-- Observability
-- Bootstrap / Self-Test
-- Plugin / Adapter interfaces
+## Boot Windows
 
-## Regras de segurança operacional
+`installers/windows/install.ps1` cria um ambiente Python privado em `%ProgramData%\TUNEL-CORE`, instala o pacote localmente e registra `TUNELCOREWatchdog` como serviço `Automatic`. O serviço inicia sem login de usuário e recompõe o Supervisor. Se ainda não houver Adapter de runtime configurado, o Supervisor permanece saudável em `waiting_runtime_adapter` até a integração externa ser fornecida.
 
-1. Nunca encerrar processo apenas por PID.
-2. Identidade exige, quando disponível, executable path, command line, parent PID e fingerprint.
-3. Falha do túnel não autoriza reinício de aplicação saudável.
-4. Watchdog recupera somente o Supervisor.
-5. Recovery é seletivo e usa retry/backoff.
-6. Credenciais são referências; segredos não entram em perfis nem no código.
-7. Nenhum lock global para todas as conexões.
-8. Caminhos de runtime são resolvidos por configuração ou diretórios do próprio produto.
-9. Nenhuma aplicação específica pode ser incorporada ao núcleo.
+## Layout principal
 
-## Estado
+```text
+src/tunel_core/
+  control_plane.py
+  data_plane.py
+  ownership.py
+  persistence_engine.py
+  reliability.py
+  observability.py
+  bootstrap.py
+  plugins.py
+  runner.py
+  selftest.py
+  supervisor.py
+  watchdog.py
+```
 
-V1 universalizada. Integrações concretas entram exclusivamente por Adapter e configuração externa.
+## Validação
+
+O CI executa em Windows e Linux, compila todos os módulos, executa pytest e verifica que caminhos/projetos específicos não retornaram ao Core.
+
+A integração com um runtime/provedor concreto é feita exclusivamente por Adapter e pertence à fase de implantação no ambiente operacional.

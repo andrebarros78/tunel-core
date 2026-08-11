@@ -2,9 +2,10 @@ $ErrorActionPreference = 'Stop'
 
 $Base = Split-Path -Parent $MyInvocation.MyCommand.Path
 $HomeRoot = if ($env:TUNEL_CORE_HOME) { $env:TUNEL_CORE_HOME } else { Join-Path $env:ProgramData 'TUNEL-CORE' }
-$ConfigPath = if ($env:TUNEL_CORE_WATCHDOG_CONFIG) { $env:TUNEL_CORE_WATCHDOG_CONFIG } else { Join-Path $Base 'tunel-core-watchdog.json' }
+$ConfigPath = if ($env:TUNEL_CORE_WATCHDOG_CONFIG) { $env:TUNEL_CORE_WATCHDOG_CONFIG } else { Join-Path $HomeRoot 'config\watchdog.json' }
 $LogRoot = Join-Path $HomeRoot 'logs'
 $LogPath = Join-Path $LogRoot 'watchdog.log'
+$HeartbeatPath = Join-Path $HomeRoot 'state\supervisor-heartbeat.json'
 
 New-Item -ItemType Directory -Path $LogRoot -Force | Out-Null
 
@@ -22,9 +23,27 @@ function Read-WatchdogConfig {
 
 function Get-SupervisorProcess($Config) {
     $pattern = [string]$Config.supervisor.process_match
+    $expected = [Environment]::ExpandEnvironmentVariables([string]$Config.supervisor.executable)
     Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
-        Where-Object { $_.CommandLine -and $_.CommandLine -match $pattern } |
+        Where-Object {
+            $_.CommandLine -and $_.CommandLine -match $pattern -and
+            $_.ExecutablePath -and ([IO.Path]::GetFullPath($_.ExecutablePath) -eq [IO.Path]::GetFullPath($expected))
+        } |
         Select-Object -First 1
+}
+
+function Test-HeartbeatFresh($Config) {
+    $timeout = 60
+    if ($Config.supervisor.heartbeat_timeout_seconds) { $timeout = [int]$Config.supervisor.heartbeat_timeout_seconds }
+    if (-not (Test-Path -LiteralPath $HeartbeatPath)) { return $false }
+    try {
+        $hb = Get-Content -LiteralPath $HeartbeatPath -Raw -Encoding UTF8 | ConvertFrom-Json
+        if (-not $hb.at) { return $false }
+        $age = ([DateTimeOffset]::UtcNow.ToUnixTimeSeconds() - [int64]$hb.at)
+        return ($age -le $timeout)
+    } catch {
+        return $false
+    }
 }
 
 function Start-Supervisor($Config) {
@@ -39,6 +58,16 @@ function Start-Supervisor($Config) {
     Start-Process -FilePath $exe -ArgumentList $args -WorkingDirectory $work -WindowStyle Hidden | Out-Null
 }
 
+function Stop-OwnedSupervisor($Process, $Config) {
+    if ($null -eq $Process) { return }
+    $expected = [Environment]::ExpandEnvironmentVariables([string]$Config.supervisor.executable)
+    if (-not $Process.ExecutablePath) { throw 'supervisor executable path unavailable; refusing termination' }
+    if ([IO.Path]::GetFullPath($Process.ExecutablePath) -ne [IO.Path]::GetFullPath($expected)) {
+        throw 'supervisor ownership mismatch; refusing termination'
+    }
+    Stop-Process -Id $Process.ProcessId -Force -ErrorAction Stop
+}
+
 Write-CoreLog 'WATCHDOG_START'
 
 while ($true) {
@@ -48,6 +77,13 @@ while ($true) {
             Write-CoreLog "WAIT_CONFIG path=$ConfigPath"
         } else {
             $supervisor = Get-SupervisorProcess $cfg
+            $fresh = Test-HeartbeatFresh $cfg
+            if ($supervisor -and -not $fresh) {
+                Write-CoreLog "SUPERVISOR_STALE pid=$($supervisor.ProcessId)"
+                Stop-OwnedSupervisor $supervisor $cfg
+                Start-Sleep -Seconds 1
+                $supervisor = $null
+            }
             if ($null -eq $supervisor) {
                 Start-Supervisor $cfg
                 Start-Sleep -Seconds 2

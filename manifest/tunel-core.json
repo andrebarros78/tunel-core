@@ -1,33 +1,54 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "module": "TUNEL-CORE",
+  "version": "0.2.0",
+  "phase": "PHASE_2_CORE_COMPLETE",
   "architecture": {
     "application_independent": true,
-    "tunnel_independent": true,
-    "watchdog_independent": true,
+    "provider_independent": true,
+    "runtime_independent": true,
+    "control_plane_separated_from_data_plane": true,
     "supervisor_independent": true,
-    "configuration_externalized": true,
-    "absolute_runtime_paths_forbidden": true
+    "watchdog_independent": true,
+    "no_absolute_project_paths": true,
+    "secrets_in_code": false
+  },
+  "capacity_baseline": {
+    "normal_channels": 16,
+    "peak_channels": 32,
+    "architectural_limit": "configurable"
   },
   "components": [
-    "connection",
-    "transport",
-    "health",
-    "recovery",
-    "persistence",
-    "concurrency",
-    "sessions",
-    "credentials",
+    "connection-manager",
+    "runtime-adapter",
+    "transport-adapter",
+    "provider-adapter",
+    "profile-manager",
+    "credential-resolver",
+    "state-store",
+    "persistence-engine",
+    "health-engine",
+    "recovery-engine",
+    "process-identity-fingerprint",
+    "ownership-lease-fencing",
+    "session-manager",
+    "multi-channel-manager",
+    "concurrency-flow-manager",
+    "high-flow-data-plane",
+    "reliability-engine",
     "observability",
-    "supervisor",
-    "watchdog",
+    "checkpoint-rollback",
     "bootstrap",
     "installer",
     "updater",
-    "self-test"
+    "self-test",
+    "plugin-adapter-interface"
   ],
-  "integration_boundary": "adapter",
-  "application_lifecycle_owned": false,
-  "credentials_embedded": false,
-  "current_phase": "V1_CORE_CLEAN"
+  "boot_policy": {
+    "watchdog_service": "automatic",
+    "before_user_login": true,
+    "supervisor_recovery": true,
+    "state_recovery": true,
+    "network_unavailable_is_retryable": true
+  }
 }
