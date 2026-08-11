@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "supervisor": {
+    "executable": "%TUNEL_CORE_HOME%\\bin\\tunel-core-supervisor.exe",
+    "arguments": [],
+    "working_directory": "%TUNEL_CORE_HOME%",
+    "process_match": "tunel-core-supervisor"
+  }
+}
