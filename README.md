@@ -1,26 +1,24 @@
 # TUNEL-CORE
 
-Núcleo universal de conexão persistente, recuperação e supervisão.
+Núcleo universal de conexão persistente, supervisão, recuperação e estado.
 
 ## Fronteira arquitetural
 
 ```text
-Pipo / IA
-   ↓
-Gateway (API e autenticação — fora deste repositório)
+Controlador externo
    ↓
 TUNEL-CORE
    ↓
 Supervisor / Watchdog
    ↓
-Túnel
+Adapter de túnel
    ↓
-Aplicação local (ex.: Windows MCP)
+Aplicação local observada
 ```
 
 Regra estrutural: **APLICAÇÃO ≠ TÚNEL ≠ SUPERVISOR ≠ WATCHDOG**.
 
-O Core não contém API externa, credenciais reais, regras do Windows MCP, vínculos a projetos locais ou caminhos fixos como `C:\Projetos`/`D:\Projetos`.
+O Core não contém API externa, credenciais reais, regras de aplicação, vínculos a projetos locais, letras de unidade, tarefas agendadas específicas ou caminhos absolutos de uma instalação anterior.
 
 ## Componentes V1
 
@@ -45,13 +43,15 @@ O Core não contém API externa, credenciais reais, regras do Windows MCP, vínc
 ## Regras de segurança operacional
 
 1. Nunca encerrar processo apenas por PID.
-2. Identidade exige, quando disponível: executable path, command line, parent PID e fingerprint.
+2. Identidade exige, quando disponível, executable path, command line, parent PID e fingerprint.
 3. Falha do túnel não autoriza reinício de aplicação saudável.
-4. Watchdog recupera Supervisor; não administra diretamente a aplicação.
+4. Watchdog recupera somente o Supervisor.
 5. Recovery é seletivo e usa retry/backoff.
 6. Credenciais são referências; segredos não entram em perfis nem no código.
 7. Nenhum lock global para todas as conexões.
+8. Caminhos de runtime são resolvidos por configuração ou diretórios do próprio produto.
+9. Nenhuma aplicação específica pode ser incorporada ao núcleo.
 
 ## Estado
 
-Extração V1 iniciada a partir da arquitetura e memória operacional consolidadas do Windows MCP. A integração com o runtime real do `tunnel-client` permanece por Adapter e será validada separadamente no ambiente operacional.
+V1 universalizada. Integrações concretas entram exclusivamente por Adapter e configuração externa.
