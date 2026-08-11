@@ -2,7 +2,17 @@
 
 Núcleo universal de conectividade persistente, multicanal, bilateral e autorrecuperável.
 
-## Objetivo V0.2 / Fase 2
+## Versão consolidada
+
+**TUNEL-CORE 0.2.0 — PHASE_2_CORE_COMPLETE — CONSOLIDATED**
+
+O TUNEL-CORE é um produto independente. Integrações com aplicações, provedores ou runtimes concretos pertencem aos sistemas integradores e são realizadas exclusivamente por Adapter.
+
+No caso do Windows MCP, `tunnel-client` pertence ao Windows MCP e não ao TUNEL-CORE.
+
+Documento de consolidação: `docs/VERSION_0.2.0_CONSOLIDATED.md`.
+
+## Arquitetura
 
 O Core mantém conexões e canais disponíveis com baixa interferência no caminho de dados, persistência resistente a crash, recuperação seletiva e isolamento entre aplicação, runtime, Supervisor e Watchdog.
 
@@ -28,7 +38,7 @@ TUNEL-CORE
      └─ High-flow streaming
       │
       ▼
-Runtime externo
+Runtime externo do sistema integrador
 ```
 
 Regra estrutural: **APLICAÇÃO ≠ CORE ≠ SUPERVISOR ≠ WATCHDOG ≠ RUNTIME**.
@@ -55,7 +65,7 @@ Regra estrutural: **APLICAÇÃO ≠ CORE ≠ SUPERVISOR ≠ WATCHDOG ≠ RUNTIME
 
 ## Boot Windows
 
-`installers/windows/install.ps1` cria um ambiente Python privado em `%ProgramData%\TUNEL-CORE`, instala o pacote localmente e registra `TUNELCOREWatchdog` como serviço `Automatic`. O serviço inicia sem login de usuário e recompõe o Supervisor. Se ainda não houver Adapter de runtime configurado, o Supervisor permanece saudável em `waiting_runtime_adapter` até a integração externa ser fornecida.
+`installers/windows/install.ps1` cria um ambiente Python privado em `%ProgramData%\TUNEL-CORE`, instala o pacote localmente e registra `TUNELCOREWatchdog` como serviço `Automatic`. O serviço inicia sem login de usuário e recompõe o Supervisor. Se ainda não houver Adapter de runtime configurado, o Supervisor permanece saudável aguardando integração externa.
 
 ## Layout principal
 
@@ -79,4 +89,4 @@ src/tunel_core/
 
 O CI executa em Windows e Linux, compila todos os módulos, executa pytest e verifica que caminhos/projetos específicos não retornaram ao Core.
 
-A integração com um runtime/provedor concreto é feita exclusivamente por Adapter e pertence à fase de implantação no ambiente operacional.
+A integração com runtime/provedor concreto é uma fase independente de implantação.
